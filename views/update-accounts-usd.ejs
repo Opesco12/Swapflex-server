@@ -1,0 +1,24 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SwapFlex Server</title>
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body>
+    <h2>SwapFlex Server</h2>
+    <div class="box">
+      <h3>Dollar Account</h3>
+      <form action="/api/update-accounts/usd" method="post">
+        <% for (const [key, value] of Object.entries(account)) { %>
+
+        <p>
+          <%= key %> :
+          <input type="text" name="<%= key %>" id="" value="<%= value %>" />
+        </p>
+        <% } %>
+        <button type="submit">Update</button>
+      </form>
+    </div>
+  </body>
+</html>

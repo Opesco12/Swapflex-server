@@ -1,0 +1,26 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Log In</title>
+    <link rel="stylesheet" href="/css/login.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h2>Login to SwapFlex Server</h2>
+      <form action="/api/login" method="post" class="form">
+        <% if (typeof messages !== 'undefined' && messages.messages.length > 0)
+        { %>
+        <ul class="error-messages">
+          <% for (const message of messages.messages) { %>
+          <li><%- message %></li>
+          <% } %>
+        </ul>
+        <% } %>
+        <input type="text" name="username" placeholder="Username" /> <br />
+        <input type="password" name="password" placeholder="Password" /> <br />
+        <button type="submit" class="button">Login</button>
+      </form>
+    </div>
+  </body>
+</html>

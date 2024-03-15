@@ -1,0 +1,64 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SwapFlex Server</title>
+    <link rel="stylesheet" href="/css/variables.css" />
+  </head>
+  <body>
+    <h2>SwapFlex Server</h2>
+
+    <div class="container">
+      <div class="box">
+        <h3>Rates</h3>
+
+        <ul class="items">
+          <% for (const rateObject of rates) { %> <% for (const [currency,
+          value] of Object.entries(rateObject)) { %>
+          <li><%= currency %>: ₦<%= value %></li>
+          <% } %> <% } %>
+        </ul>
+
+        <h3>Max Amounts</h3>
+
+        <ul class="items">
+          <% for (const rateObject of max) { %> <% for (const [currency, value]
+          of Object.entries(rateObject)) { %>
+          <li><%= currency %>: ₦<%= value %></li>
+          <% } %> <% } %>
+        </ul>
+
+        <button onclick="window.location.href='/api/update-rates'">
+          Update Rates
+        </button>
+      </div>
+
+      <div class="box">
+        <h3>Account Details</h3>
+
+        <ul class="items">
+          <h4>Dollar Account</h4>
+          <% for (const [key, value] of Object.entries(account_usd)) { %>
+          <li><strong><%= key %>:</strong> <%= value %></li>
+          <% } %>
+        </ul>
+        <button onclick="window.location.href='/api/update-accounts/usd'">
+          Update Dollar Account
+        </button>
+
+        <ul class="items">
+          <h4>Euros Account</h4>
+          <% for (const [key, value] of Object.entries(account_eur)) { %>
+          <li><strong><%= key %>:</strong> <%= value %></li>
+          <% } %>
+        </ul>
+        <button onclick="window.location.href='/api/update-accounts/eur'">
+          Update Euros Accounts
+        </button>
+      </div>
+    </div>
+    <form action="/api/logout" method="post">
+      <button type="submit">Logout</button>
+    </form>
+  </body>
+</html>
