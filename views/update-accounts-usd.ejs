@@ -9,14 +9,20 @@
     <h2>SwapFlex Server</h2>
     <div class="box">
       <h3>Dollar Account</h3>
-      <form action="/api/update-accounts/usd" method="post">
-        <% for (const [key, value] of Object.entries(account)) { %>
+      <form action="/app/update-accounts/usd" method="post">
+        <% for (const account_props in (account)) { %> <% if (account_props !==
+        "_id") { %>
 
         <p>
-          <%= key %> :
-          <input type="text" name="<%= key %>" id="" value="<%= value %>" />
+          <%= account_props %> :
+          <input
+            type="text"
+            name="<%= account_props %>"
+            id=""
+            value="<%= account[account_props] %>"
+          />
         </p>
-        <% } %>
+        <% } %> <% } %>
         <button type="submit">Update</button>
       </form>
     </div>

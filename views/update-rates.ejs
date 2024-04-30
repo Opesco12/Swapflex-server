@@ -9,9 +9,8 @@
     <h2>SwapFlex Server</h2>
     <div class="box">
       <h3>Rates</h3>
-      <form action="/api/update-rates" method="post">
-        <% for (const rateObject of rates) { %> <% for (const [currency, value]
-        of Object.entries(rateObject)) { %>
+      <form action="/app/update-rates" method="post">
+        <% for (const currency in rates) { %> <% if (currency !== "_id") { %>
 
         <p>
           <%= currency %> :
@@ -19,27 +18,11 @@
             type="text"
             name="<%= currency %>"
             id=""
-            value="<%= value %>"
+            value="<%= rates[currency] %>"
           />
         </p>
         <% } %> <% } %>
 
-        <h3>Max Amounts</h3>
-
-        <% for (const rateObject of max) { %> <% for (const [currency, value] of
-        Object.entries(rateObject)) { %>
-
-        <p>
-          <%= currency %> :
-          <input
-            type="text"
-            name="<%= currency %>"
-            id=""
-            value="<%= value %>"
-          />
-        </p>
-        <% } %> <% } %>
-        <p>Note: The max amounts are in their respective currencies</p>
         <button type="submit">Update</button>
       </form>
     </div>

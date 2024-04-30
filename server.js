@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
@@ -11,26 +12,28 @@ const session = require("express-session");
 const MongoStore = require("connect-mongodb-session")(session);
 const flash = require("connect-flash");
 const cookieParser = require("cookie-parser");
+
+const logger = require("./logger");
+
 const app = express();
+
+const models = require("./account_schema");
 
 const port = 3000;
 
-const uri = "mongodb://127.0.0.1:27017/swapflex";
+const uri = process.env.MONGODB_URI;
 
 mongoose
   .connect(uri)
-  .then(() => console.log("Connected to database"))
-  .catch((err) => console.log(err));
-
-const store = new MongoStore({
-  uri: "mongodb://127.0.0.1:27017/swapflex", //process.env.MONGODB_URI, // Replace with your MongoDB connection string
-  collection: "sessions", // Name of the MongoDB collection to store sessions
-});
-
-// SwapFlex-admin     unconditional
-// swapflex           unremorseful
+  .then(() => logger.info("Database connected"))
+  .catch((err) => {
+    logger.error("Error", err);
+  });
 
 const User = require("./userSchema");
+const USD_ACCOUNT = models.USD_account;
+const EUR_ACCOUNT = models.EUR_account;
+const Rate = models.Rate;
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -68,9 +71,9 @@ passport.use(
                   return done(null, user);
                 }
               })
-              .catch((err) => console.log(err));
+              .catch((err) => logger.error("Error", err));
           })
-          .catch((err) => console.log(err));
+          .catch((err) => logger.error("Error", err));
       } catch (err) {
         return done(err);
       }
@@ -88,139 +91,172 @@ const checkAuthenticated = (req, res, next) => {
   if (req.isAuthenticated()) {
     return next();
   }
-  res.redirect("/api/login");
+  res.redirect("/app/login");
 };
 
 const checkLoggedIn = (req, res, next) => {
   if (req.isAuthenticated()) {
-    res.redirect("/api/variables");
+    res.redirect("/app/variables");
   }
   return next();
 };
 
-const variables = [
-  {
-    rate: [{ USD: 1520 }, { EUR: 2000 }],
-  },
-  {
-    MAX: [{ USD: 2100 }, { EUR: 2300 }],
-  },
-  {
-    ACCOUNT_USD: {
-      "Account Holder": "Emmanuel Agburum",
-      "Bank Name": "WELLS FARGO BANK, N.A",
-      "Account Number": "40630152542797550",
-      "Routing Number": "121000248",
-      "Account Type": "Checking",
-      Address:
-        "651, North Broad Street, Suite 206, Middletown, 19709 Delaware, USA",
-    },
-  },
-  {
-    ACCOUNT_EUR: {
-      "Account Holder": "Emmanuel Agburum",
-      "Bank Name": "Clear Junction Limited",
-      IBAN: "GB47CLJU04130739195984",
-      "Bic code": "GB47CLJU",
-      "Sort Code": "041307",
-      "Swift Code": "CLJUGB21XXX",
-      Address: "16 Mortimer Street, London, W1T 3JL, United Kingdom",
-    },
-  },
-];
-
-// The max values are in their respective currencies...either USD or EUR
-
-app.get("/api", (req, res) => {
+app.get("/app", (req, res) => {
   res.render("index");
 });
 
-app.get("/api/login", checkLoggedIn, (req, res) => {
+app.get("/app/login", checkLoggedIn, (req, res) => {
   res.render("login", { error: null });
 });
 
 app.post(
-  "/api/login",
+  "/app/login",
   passport.authenticate("local", {
-    successRedirect: "/api/variables",
-    failureRedirect: "/api/login",
+    successRedirect: "/app/variables",
+    failureRedirect: "/app/login",
     failureFlash: true,
   })
 );
 
-app.get("/api/variables", checkAuthenticated, (req, res) => {
-  res.render("variables", {
-    rates: variables[0].rate,
-    max: variables[1].MAX,
-    account_usd: variables[2].ACCOUNT_USD,
-    account_eur: variables[3].ACCOUNT_EUR,
-  });
+app.get("/app/variables", checkAuthenticated, async (req, res) => {
+  try {
+    const [usdAccount, eurAccount, rate] = await Promise.all([
+      USD_ACCOUNT.find({}),
+      EUR_ACCOUNT.find({}),
+      Rate.find({}),
+    ]);
+
+    const accountUSD = usdAccount[0];
+    const accountEUR = eurAccount[0];
+    const rates = { ...rate[0] };
+
+    res.render("variables", {
+      rates: rates._doc,
+      account_usd: accountUSD._doc,
+      account_eur: accountEUR._doc,
+    });
+  } catch (err) {
+    console.error(err);
+  }
 });
 
-app.post("/api/rates", (req, res) => {
-  res.send("New Global Variables have been set...");
+app.get("/app/update-rates", checkAuthenticated, async (req, res) => {
+  try {
+    const [usdAccount, eurAccount, rate] = await Promise.all([
+      USD_ACCOUNT.find({}),
+      EUR_ACCOUNT.find({}),
+      Rate.find({}),
+    ]);
+
+    const accountUSD = usdAccount[0];
+    const accountEUR = eurAccount[0];
+    const rates = { ...rate[0] };
+
+    res.render("update-rates", {
+      rates: rates._doc,
+      account_usd: accountUSD._doc,
+      account_eur: accountEUR._doc,
+    });
+  } catch (err) {
+    console.error(err);
+  }
 });
 
-app.get("/api/update-rates", (req, res) => {
-  res.render("update-rates", {
-    rates: variables[0].rate,
-    max: variables[1].MAX,
-  });
+app.post("/app/update-rates", (req, res) => {
+  Rate.findOneAndReplace({}, { USD: req.body.USD, EUR: req.body.EUR })
+    .then((updatedRate) => {
+      if (updatedRate) {
+        logger.info("Rates Updated");
+      }
+    })
+    .catch((err) => {
+      logger.error("Error", err);
+    });
+  res.redirect("/app/variables");
 });
 
-// app.get("/api/create-user", (req, res) => {
-//   const user = new User({
-//     username: "SwapFlex-admin",
-//     password: "unconditional",
-//   });
-
-//   user
-//     .save()
-//     .then(() => console.log("SUccesfully created a new admin user"))
-//     .catch((error) => console.log(error));
-//   res.send("Details received");
-// });
-
-app.post("/api/update-rates", (req, res) => {
-  // console.log(req.body.USD[0]);
-  variables[0].rate[0].USD = req.body.USD[0];
-  variables[0].rate[1].EUR = req.body.EUR[0];
-  variables[1].MAX[0].USD = req.body.USD[1];
-  variables[1].MAX[1].EUR = req.body.EUR[1];
-  res.redirect("/api/variables");
-});
-
-app.get("/api/update-accounts/:currency", (req, res) => {
+app.get("/app/update-accounts/:currency", checkAuthenticated, (req, res) => {
   let view;
-  let account;
+  var account = {};
   if (req.params.currency === "usd") {
     view = "update-accounts-usd";
-    account = variables[2].ACCOUNT_USD;
+
+    USD_ACCOUNT.find({})
+      .then((acc) => {
+        account = { ...acc[0]._doc };
+        res.render(view, { account: account });
+      })
+      .catch((err) => logger.error("Error", err));
   } else if (req.params.currency === "eur") {
     view = "update-accounts-eur";
-    account = variables[3].ACCOUNT_EUR;
+
+    EUR_ACCOUNT.find({})
+      .then((acc) => {
+        account = { ...acc[0]._doc };
+        res.render(view, { account: account });
+      })
+      .catch((err) => logger.error("Error", err));
   }
-  res.render(view, { account: account });
 });
 
-app.post("/api/update-accounts/:currency", (req, res) => {
+app.post("/app/update-accounts/:currency", (req, res) => {
   if (req.params.currency === "usd") {
-    variables[2].ACCOUNT_USD = req.body;
+    USD_ACCOUNT.findOneAndReplace({}, req.body)
+      .then((updated) => {
+        if (updated) {
+          logger.info("Account Updated");
+        }
+      })
+      .catch((err) => {
+        logger.error("Error", err);
+      });
   } else if (req.params.currency === "eur") {
-    variables[3].ACCOUNT_EUR = req.body;
+    EUR_ACCOUNT.findOneAndReplace({}, req.body)
+      .then((updated) => {
+        if (updated) {
+          logger.info("Account Updated");
+        }
+      })
+      .catch((err) => {
+        logger.error("Error", err);
+      });
   }
-  res.redirect("/api/variables");
+  res.redirect("/app/variables");
 });
 
-app.post("/api/logout", (req, res, next) => {
+app.get("/api/variables", async (req, res) => {
+  try {
+    const [usdAccount, eurAccount, rate] = await Promise.all([
+      USD_ACCOUNT.find({}),
+      EUR_ACCOUNT.find({}),
+      Rate.find({}),
+    ]);
+
+    const accountUSD = usdAccount[0];
+    const accountEUR = eurAccount[0];
+    const rates = { ...rate[0] };
+
+    res.send([
+      {
+        rates: rates._doc,
+      },
+      { usd: accountUSD._doc },
+      { eur: accountEUR._doc },
+    ]);
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+app.post("/app/logout", (req, res, next) => {
   req.logOut((err) => {
     if (err) {
       return next(err);
     }
-    res.redirect("/api/login");
+    res.redirect("/app/login");
   });
 });
 
 app.listen(port, () => {
-  console.log("Swapflex server is now running");
+  logger.info("Swapflex server is now running");
 });

@@ -13,22 +13,26 @@
         <h3>Rates</h3>
 
         <ul class="items">
-          <% for (const rateObject of rates) { %> <% for (const [currency,
-          value] of Object.entries(rateObject)) { %>
-          <li><%= currency %>: ₦<%= value %></li>
+          <% for (const currency in rates) { %> <% if (currency !== "_id") { %>
+          <li><%= currency %>: ₦<%= rates[currency] %></li>
           <% } %> <% } %>
         </ul>
 
         <h3>Max Amounts</h3>
 
         <ul class="items">
-          <% for (const rateObject of max) { %> <% for (const [currency, value]
-          of Object.entries(rateObject)) { %>
-          <li><%= currency %>: ₦<%= value %></li>
+          <% for (const [key, value] of Object.entries(account_usd)) { %> <% if
+          (key === "max_amount_receivable") {%>
+          <li><strong> USD Max Amount:</strong> $<%= value %></li>
+
+          <% } %> <% } %> <% for (const [key, value] of
+          Object.entries(account_eur)) { %> <% if (key ===
+          "max_amount_receivable") {%>
+          <li><strong> USD Max Amount:</strong> €<%= value %></li>
           <% } %> <% } %>
         </ul>
 
-        <button onclick="window.location.href='/api/update-rates'">
+        <button onclick="window.location.href='/app/update-rates'">
           Update Rates
         </button>
       </div>
@@ -38,26 +42,34 @@
 
         <ul class="items">
           <h4>Dollar Account</h4>
-          <% for (const [key, value] of Object.entries(account_usd)) { %>
-          <li><strong><%= key %>:</strong> <%= value %></li>
-          <% } %>
+          <% for (const account_props in (account_usd)) { %> <% if
+          (account_props !== "_id") { %>
+          <li>
+            <strong><%= account_props %>:</strong> <%=
+            account_usd[account_props] %>
+          </li>
+          <% } %> <% } %>
         </ul>
-        <button onclick="window.location.href='/api/update-accounts/usd'">
+        <button onclick="window.location.href='/app/update-accounts/usd'">
           Update Dollar Account
         </button>
 
         <ul class="items">
           <h4>Euros Account</h4>
-          <% for (const [key, value] of Object.entries(account_eur)) { %>
-          <li><strong><%= key %>:</strong> <%= value %></li>
-          <% } %>
+          <% for (const account_props in (account_eur)) { %> <% if
+          (account_props !== "_id") { %>
+          <li>
+            <strong><%= account_props %>:</strong> <%=
+            account_eur[account_props] %>
+          </li>
+          <% } %> <% } %>
         </ul>
-        <button onclick="window.location.href='/api/update-accounts/eur'">
+        <button onclick="window.location.href='/app/update-accounts/eur'">
           Update Euros Accounts
         </button>
       </div>
     </div>
-    <form action="/api/logout" method="post">
+    <form action="/app/logout" method="post">
       <button type="submit">Logout</button>
     </form>
   </body>
