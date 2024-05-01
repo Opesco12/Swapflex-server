@@ -81,6 +81,10 @@ passport.use(
   )
 );
 
+app.use((req, res) => {
+  res.status(404).send("404 Not Found");
+});
+
 passport.serializeUser((user, done) => done(null, user.id));
 
 passport.deserializeUser((user, done) => {
