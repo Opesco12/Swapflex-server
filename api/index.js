@@ -1,4 +1,4 @@
-require("dotenv").config();
+require("dotenv").config({ path: process.cwd() + "/../.env" });
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
@@ -13,13 +13,13 @@ const MongoStore = require("connect-mongodb-session")(session);
 const flash = require("connect-flash");
 const cookieParser = require("cookie-parser");
 
-const logger = require("./logger");
+const logger = require("../logger");
 
 const app = express();
 
-const models = require("./account_schema");
+const models = require("../account_schema");
 
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 const uri = process.env.MONGODB_URI;
 
@@ -30,7 +30,7 @@ mongoose
     logger.error("Error", err);
   });
 
-const User = require("./userSchema");
+const User = require("../userSchema");
 const USD_ACCOUNT = models.USD_account;
 const EUR_ACCOUNT = models.EUR_account;
 const Rate = models.Rate;
@@ -262,5 +262,6 @@ app.post("/app/logout", (req, res, next) => {
 });
 
 app.listen(port, () => {
-  logger.info("Swapflex server is now running");
+  logger.info("Swapflex server is now running ");
+  logger.info(port);
 });
